@@ -1,4 +1,5 @@
 import 'package:flash_chat/components/rounded_button.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'chat_screen.dart';
@@ -17,6 +18,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool showSpinner = false;
   String email;
   String password;
+  bool wrongEmail = false;
+  bool wrongPassword = false;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     email = value;
                   },
                   decoration: kTextFieldDecoration.copyWith(
-                      hintText: 'Enter your email')),
+                      hintText: 'Enter your email',
+                      errorText:
+                          wrongEmail ? 'No user found for that email' : null)),
               SizedBox(
                 height: 8.0,
               ),
@@ -60,7 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     password = value;
                   },
                   decoration: kTextFieldDecoration.copyWith(
-                      hintText: 'Enter your password')),
+                      hintText: 'Enter your password',
+                      errorText: wrongPassword
+                          ? 'Wrong password provided for that user'
+                          : null)),
               SizedBox(
                 height: 24.0,
               ),
@@ -80,11 +88,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     setState(() {
                       showSpinner = false;
                     });
-                  } catch (e) {
-                    print(e);
-                    setState(() {
-                      showSpinner = false;
-                    });
+                  } on FirebaseAuthException catch (e) {
+                    if (e.code == 'user-not-found') {
+                      setState(() {
+                        wrongEmail = true;
+                        wrongPassword = false;
+                        showSpinner = false;
+                      });
+                    } else if (e.code == 'wrong-password') {
+                      setState(() {
+                        wrongPassword = true;
+                        wrongEmail = false;
+                        showSpinner = false;
+                      });
+                    }
                   }
                 },
               ),
